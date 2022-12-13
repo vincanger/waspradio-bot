@@ -6,7 +6,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('play')
     .setDescription('Play a playlist from YouTube')
-    .addStringOption((option) => option.setName('style').setDescription('Ambient, LoFi').setRequired(true)),
+    .addStringOption((option) => option.setName('style').setDescription('Ambient, LoFi, Electro').setRequired(true)),
   run: async ({ client, interaction }) => {
     if (!interaction.member.voice.channel) return interaction.reply({ content: 'You must be in a voice channel to use this command!', ephemeral: true });
     const queue = client.player.createQueue(interaction.guildId);
@@ -23,6 +23,9 @@ module.exports = {
           break;
         case 'lofi':
           url = 'https://youtube.com/playlist?list=PLpJu0Lz54ojFdr6K-oGmSDGrzAlkQ8-Kb';
+          break;
+        case 'electro':
+          url = 'https://youtube.com/playlist?list=PLpJu0Lz54ojEmTgM-8daNcg5udcFg0oNr';
           break;
         default:
           url = 'https://www.youtube.com/playlist?list=PL3Vb7c7onGS1B54VlXhi16EmMVmAw2eiI';
