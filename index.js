@@ -11,7 +11,7 @@ const LOAD_SLASH = process.argv[2] == "load";
 console.log(process.argv)
 
 const CLIENT_ID = '1052200902376837171';
-const GUILD_ID = '839900449648935024';
+const GUILD_ID = '686873244791210014';
 
 const client = new Discord.Client({
   intents: [Discord.GatewayIntentBits.Guilds, Discord.GatewayIntentBits.GuildVoiceStates],
