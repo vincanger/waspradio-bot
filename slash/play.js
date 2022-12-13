@@ -37,6 +37,7 @@ module.exports = {
           console.error(err);
         });
       if (!searchResult || !searchResult.playlist) return interaction.reply({ content: 'No video was found with the provided url!', ephemeral: true });
+      queue.clear();
       queue.addTracks(searchResult.tracks);
       embed
         .setDescription(
