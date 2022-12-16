@@ -28,7 +28,7 @@ module.exports = {
           url = 'https://youtube.com/playlist?list=PLpJu0Lz54ojEmTgM-8daNcg5udcFg0oNr';
           break;
         default:
-          url = 'https://www.youtube.com/playlist?list=PL3Vb7c7onGS1B54VlXhi16EmMVmAw2eiI';
+          url = 'https://youtube.com/playlist?list=PLpJu0Lz54ojEFFiOVfVLOC3w4YGrQhZ_g';
           break;
       }
       const searchResult = await client.player

@@ -5,13 +5,18 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
 const { Player } = require('discord-player');
+const { joinVoiceChannel } = require('@discordjs/voice');
+const { EmbedBuilder } = require('discord.js');
+const { QueryType } = require('discord-player');
+const { join } = require('path');
 
 const TOKEN = process.env.TOKEN;
-const LOAD_SLASH = process.argv[2] == "load";
-console.log(process.argv)
+const LOAD_SLASH = process.argv[2] == 'load';
+console.log(process.argv);
 
 const CLIENT_ID = '1052200902376837171';
-const GUILD_ID = '686873244791210014';
+const GUILD_ID = '686873244791210014'; // for testing --> '839900449648935024'; 
+const CHANNEL_ID =  '1052267139437961257'; // for testing --> '839900450110963745';
 
 const client = new Discord.Client({
   intents: [Discord.GatewayIntentBits.Guilds, Discord.GatewayIntentBits.GuildVoiceStates],
@@ -26,6 +31,8 @@ client.player = new Player(client, {
 });
 
 let commands = [];
+let queue;
+let connection;
 
 const slashFiles = fs.readdirSync('./slash').filter((file) => file.endsWith('.js'));
 for (const file of slashFiles) {
@@ -53,7 +60,7 @@ if (LOAD_SLASH) {
       }
     });
 } else {
-  client.on('ready', () => {
+  client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}`);
   });
   client.on('interactionCreate', (interaction) => {
@@ -68,5 +75,54 @@ if (LOAD_SLASH) {
     }
     handleCommand();
   });
+  client.on('voiceStateUpdate', async (oldState, newState) => {
+    const channel = client.channels.cache.get(CHANNEL_ID);
+    const currentListeners = channel.members.size;
+
+    if (!connection) {
+      console.log('no connection -- joining channel');
+
+      connection = joinVoiceChannel({
+        channelId: CHANNEL_ID,
+        guildId: GUILD_ID,
+        adapterCreator: channel.guild.voiceAdapterCreator,
+      });
+    }
+
+    if (currentListeners >= 1) {
+      if (queue?.playing) {
+        console.log('queue already playing -- skipping setup');
+        return;
+      }
+      console.log('queue not playing -- setting up initial queue');
+      if (oldState.channelId === null && newState.channelId !== null) {
+        if (!channel) return;
+        // Send the message, mentioning the member
+        if (newState.id !== CLIENT_ID) channel.send(`${newState.member} Hi. Use the \`/\` to control the music!`);
+      }
+
+      queue = client.player.createQueue(GUILD_ID);
+      if (!queue.connection) await queue.connect(CHANNEL_ID);
+      const searchResult = await client.player
+        .search('https://youtube.com/playlist?list=PLpJu0Lz54ojEmTgM-8daNcg5udcFg0oNr', {
+          searchEngine: QueryType.YOUTUBE_PLAYLIST,
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+      if (!searchResult || !searchResult.playlist) channel.send('Nothing was found with the provided url!');
+
+      queue.addTracks(searchResult.tracks);
+      let embed = new EmbedBuilder();
+      embed
+        .setDescription(
+          `**${searchResult.tracks.length} songs from [${searchResult.playlist.title}](${searchResult.playlist.url})** have been added to the Queue`
+        )
+        .setThumbnail(searchResult.playlist.thumbnail.url);
+
+      if (!queue.playing) await queue.play();
+    }
+  });
+
   client.login(TOKEN);
 }
