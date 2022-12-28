@@ -15,8 +15,11 @@ const LOAD_SLASH = process.argv[2] == 'load';
 console.log(process.argv);
 
 const CLIENT_ID = '1052200902376837171';
-const GUILD_ID = '686873244791210014'; // for testing --> '839900449648935024'; 
-const CHANNEL_ID =  '1052267139437961257'; // for testing --> '839900450110963745';
+// const GUILD_ID = '686873244791210014'; 
+// const CHANNEL_ID =  '1052267139437961257'; 
+// use the below values for testing in the dev server
+const GUILD_ID = '839900449648935024'; 
+const CHANNEL_ID =  '839900450110963745';
 
 const client = new Discord.Client({
   intents: [Discord.GatewayIntentBits.Guilds, Discord.GatewayIntentBits.GuildVoiceStates],
@@ -31,8 +34,6 @@ client.player = new Player(client, {
 });
 
 let commands = [];
-let queue;
-let connection;
 
 const slashFiles = fs.readdirSync('./slash').filter((file) => file.endsWith('.js'));
 for (const file of slashFiles) {
@@ -76,18 +77,15 @@ if (LOAD_SLASH) {
     handleCommand();
   });
   client.on('voiceStateUpdate', async (oldState, newState) => {
+    // check if the update comes from the bot itself
+    if (newState.id === CLIENT_ID) {
+      console.log('newstate id', newState.id)
+      return;
+    }
+    
+    let queue = client.player.getQueue(GUILD_ID);
     const channel = client.channels.cache.get(CHANNEL_ID);
     const currentListeners = channel.members.size;
-
-    if (!connection) {
-      console.log('no connection -- joining channel');
-
-      connection = joinVoiceChannel({
-        channelId: CHANNEL_ID,
-        guildId: GUILD_ID,
-        adapterCreator: channel.guild.voiceAdapterCreator,
-      });
-    }
 
     if (currentListeners >= 1) {
       if (queue?.playing) {
